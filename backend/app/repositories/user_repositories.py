@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Optional, List, Type
+from typing import  Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 
@@ -16,7 +16,7 @@ class UserRepository(BaseRepository[User]):
         )
         return result.scalar_one_or_none()
     
-    async def get_active_user(self, limits: int = 20, offset: int  = 0) -> List[User]:
+    async def get_active_user(self, limit: int = 20, offset: int  = 0) -> List[User]:
         """Get all active user with pagination"""
         result = await self.db.execute(
             select(User).where(User.is_active == True).limit(limit).offset(offset)

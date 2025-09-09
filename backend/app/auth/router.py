@@ -6,6 +6,7 @@ from app.auth.service import AuthService
 from app.users import User, UserCreate, UserResponse, UserUpdate
 from app.core import limiter, resend_verification_limiter
 from app.email_verification import RegistrationResponse, EmailVerificationResponse, EmailVerificationCode
+from app.auth.schemas import ForgetPasswordRequest, ResetPasswordRequest
 
 router = APIRouter()
 
@@ -121,4 +122,34 @@ async def logout(response: Response):
     )
 
     return {"message": "Successfully logout"}
+
+@router.post(
+    "/password/forget",
+    status_code=status.HTTP_200_OK,
+    description="Request password reset email"
+)
+@limiter.limit("5/minute")
+async def forget_password(
+    request: Request,
+    payload: ForgetPasswordRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):   
+    """Request password reset email"""
+    return await auth_service.forget_password(payload)
+
+
+@router.post(
+    "/password/reset",
+    status_code=status.HTTP_200_OK,
+    description="Reset password with verification code"
+)
+@limiter.limit("10/hour")
+async def reset_password(
+    request: Request,
+    payload: ResetPasswordRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Reset password using verification code"""
+    return await auth_service.reset_password(payload)
+
 

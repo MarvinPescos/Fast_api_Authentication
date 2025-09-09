@@ -1,17 +1,22 @@
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select
+from sqlalchemy import select, update
 from fastapi import HTTPException, status
 import structlog
+import os
 
-from app.auth import LoginRequest, LoginResponse
+from app.auth import LoginRequest, LoginResponse, ResetPasswordRequest, ForgetPasswordRequest
 from app.email import send_verification_email
-from app.users import User, UserCreate, UserResponse, UserUpdate
-from app.core import hash_password, verify_password, create_access_token
+from app.users import User, UserCreate, UserResponse, UserUpdate, EmailVerification, EmailVerification
+from app.core import hash_password, verify_password, create_access_token, PASSWORD_RESET
 from app.email import send_verification_email
 from app.email_verification import EmailVerificationService, RegistrationResponse, EmailVerificationResponse, EmailVerificationCode
 from app.core import USER_REGISTRATION
 from app.repositories import BaseRepository, UserRepository
+from app.email.service import send_password_reset_email
+from app.users.models import VerificationStatus, VerificationType
+
 
 logger = structlog.get_logger(__name__)
 
@@ -83,7 +88,7 @@ class AuthService:
 
             email_sent = await send_verification_email(
                 to_email=user.email,
-                verification_code=verification.code,
+                verification_code=verification.email_code,
                 user_name=user.username
             )
             
@@ -200,7 +205,7 @@ class AuthService:
 
             email_sent = await send_verification_email(
                 to_email=user.email,
-                verification_code=verification.code,
+                verification_code=verification.email_code,
                 user_name=user.user_name
             )
 
@@ -305,4 +310,110 @@ class AuthService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update user"
             )
+
+    async def forget_password(self, payload: ForgetPasswordRequest):
+        try:
+            result = await self.db.execute(select(User).where(User.email == payload.email))
+            user = result.scalar_one_or_none()
+
+            if user:
+                await self.db.execute(
+                    update(EmailVerification).where(
+                        EmailVerification.user_id == user.id,
+                        EmailVerification.verification_type == VerificationType.PASSWORD_RESET,
+                        EmailVerification.status == VerificationStatus.PENDING
+                    ).values(status=VerificationStatus.EXPIRED)
+                )
+
+                await self.db.commit()
+
+                verification = await EmailVerificationService.createVerification(
+                    user_id = user.id,
+                    email=user.email,
+                    db=self.db,
+                    verification_type=VerificationType.PASSWORD_RESET
+                )
+
+                frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+                reset_link = f"{frontend_url}/reset-password?code={verification.reset_token}"
+
+                sent = await send_password_reset_email(
+                    to_email=user.email,
+                    reset_link=reset_link,
+                    user_name=user.username,
+                )
+
+                if sent:
+                    try:
+                        PASSWORD_RESET.labels(status="issued").inc()
+                    except NameError:
+                        pass
+
+                return {"message": "If that email exist, we've sent a reset link"}
+
+        except Exception as e:
+            logger.error(f"Forget password error: {str(e)}")
+            return {"message": "If that email exists, we've sent a reset link."}
+
+    async def reset_password(self, payload: ResetPasswordRequest):
+        try:
+            
+            result = await self.db.execute(
+                select(EmailVerification).where(
+                    EmailVerification.reset_token == payload.code,
+                    EmailVerification.status == VerificationStatus.PENDING,
+                    EmailVerification.verification_type == VerificationType.PASSWORD_RESET,
+                    EmailVerification.expires_at > datetime.utcnow()
+                )
+            )
+
+            verification = result.scalar_one_or_none()
+
+            if not verification:
+                try:
+                    PASSWORD_RESET.labels(status="invalid").inc()
+                except NameError:
+                    ...
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid or expired reset token"
+                )
+            
+            user = await self.db.get(User, verification.user_id)
+
+            if not user:
+                try:
+                    PASSWORD_RESET.labels(status="invalid").inc()
+                except NameError:
+                    ...
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found"
+                )
+            
+            user.hashed_password = hash_password(payload.new_password)
+
+            verification.status = VerificationStatus.VERIFIED
+
+            await self.db.commit()
+
+            try:
+                PASSWORD_RESET.labels(status="success").inc()
+            except NameError:
+                ...
+            
+            return {"message": "Successfully changed password"}
+
+        except HTTPException:
+            raise
+
+        except Exception as e:
+            logger.error(f"Password reset error: {str(e)}")
+            await self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to reset Password"
+            )
+
+
     

@@ -46,7 +46,17 @@ class EmailVerification(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)
-    code: Mapped[str] = mapped_column(String(6))
+    
+    # Industry standard: Separate columns for different security patterns
+    email_code: Mapped[Optional[str]] = mapped_column(
+        String(6), nullable=True, 
+        comment="6-digit code for email verification"
+    )
+    reset_token: Mapped[Optional[str]] = mapped_column(
+        String(128), nullable=True, 
+        comment="32+ char secure token for password reset"
+    )
+    
     verification_type: Mapped[VerificationType] = mapped_column(
         Enum(VerificationType),
         default=VerificationType.EMAIL_REGISTRATION
@@ -61,6 +71,14 @@ class EmailVerification(Base):
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user: Mapped[User] = relationship("User", back_populates="email_verifications")
+
+    @property
+    def current_code(self) -> Optional[str]:
+        """Get the appropriate code/token based on verification type"""
+        if self.verification_type == VerificationType.PASSWORD_RESET:
+            return self.reset_token
+        else:
+            return self.email_code
 
 
 

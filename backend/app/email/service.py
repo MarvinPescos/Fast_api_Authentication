@@ -85,6 +85,32 @@ class EmailService:
             print(f"📧 FROM: {settings.MAIL_FROM}")
             return False
         
+    async def send_password_reset_email(self, to_email: str, reset_link: str, user_name:  str = "User") -> bool:
+        try:
+            context = {
+                'app_name': settings.APP_NAME,
+                'user_name': user_name,
+                "reset_link": reset_link,
+                'expiry_minutes': settings.EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES
+            }
+
+            html_template = self.template_env.get_template('reset_password.html')
+            text_template = self.template_env.get_template('reset_password.txt')
+            html_context = html_template.render(**context)
+            text_context = text_template.render(**context)
+            message = MessageSchema(
+                subject=f"Reset your {settings.APP_NAME} password",
+                recipients=[to_email],
+                body=text_context,
+                html=html_context,
+                subtype=MessageType.html
+            )
+            await self.fastmail.send_message(message)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
+            return False
+        
 email_service = EmailService()
 
 async def send_verification_email(
@@ -94,6 +120,9 @@ async def send_verification_email(
 ) -> bool:
     """Convenience Function to send verification email"""
     return await email_service.send_verification_email(to_email, verification_code, user_name)
+
+async def send_password_reset_email(to_email: str, reset_link: str, user_name: str = "User") -> bool:
+    return await email_service.send_password_reset_email(to_email, reset_link, user_name)
 
 
 

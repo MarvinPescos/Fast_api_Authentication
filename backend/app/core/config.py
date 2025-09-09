@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # App Settings
     APP_NAME: str = Field(default="Financial Tracker", description="Application name")
     DEBUG: bool = Field(default=False, description="Debug mode" )
+    FRONTEND_URL: str = Field(default="http://localhost:5173", description="Frontend application URL")
 
     ALLOWED_ORIGINS: List[str] = Field(
         default=[

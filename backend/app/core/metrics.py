@@ -23,3 +23,9 @@ EMAIL_VERIFICATIONS = Counter(
     'Total email verifications',
     ['status']
 )
+
+PASSWORD_RESET = Counter(
+    'passowrd_resets_total',
+    'Passwrd resets lifecycle',
+    ['status']
+)

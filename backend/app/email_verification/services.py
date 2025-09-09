@@ -15,6 +15,10 @@ class EmailVerificationService:
     """Service for handling email verification logic"""
 
     @staticmethod
+    async def generate_reset_token() -> str:
+         return secrets.token_urlsafe(32)
+
+    @staticmethod
     async def generate_code() -> str:
         """Generate a 6-digit verification code"""
         return ''.join(secrets.choice(string.digits) for _ in range(6))
@@ -49,15 +53,30 @@ class EmailVerificationService:
 
             logger.info("Attempting to create verification")
 
-            verification = EmailVerification(
-                user_id = user_id,
-                email = email,
-                code = await EmailVerificationService.generate_code(),
-                verification_type = verification_type,
-                expires_at = datetime.utcnow() + timedelta(
-                    minutes=settings.EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES
+            # Create verification with appropriate field based on type
+            if verification_type == VerificationType.PASSWORD_RESET:
+                reset_token = await EmailVerificationService.generate_reset_token()
+                verification = EmailVerification(
+                    user_id=user_id,
+                    email=email,
+                    reset_token=reset_token,
+                    verification_type=verification_type,
+                    expires_at=datetime.utcnow() + timedelta(
+                        minutes=settings.EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES
+                    )
                 )
-            )
+            else:
+                # Email verification (6-digit code)
+                email_code = await EmailVerificationService.generate_code()
+                verification = EmailVerification(
+                    user_id=user_id,
+                    email=email,
+                    email_code=email_code,
+                    verification_type=verification_type,
+                    expires_at=datetime.utcnow() + timedelta(
+                        minutes=settings.EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES
+                    )
+                )
 
             logger.info("Successfully created verification for this user")
 
@@ -108,7 +127,8 @@ class EmailVerificationService:
                 if not verification:
                     return False, "No active verification found or expired code"
                 
-                if verification.code != code:
+                # For email verification, check email_code
+                if not verification.email_code or verification.email_code != code:
                     return False, "Invalid verification code"
                 
                 verification.status = VerificationStatus.VERIFIED
@@ -159,55 +179,33 @@ class EmailVerificationService:
                 "error": {str(e)},
                 "cleaned_count": 0,
               }
-       
+         
+    
+    @staticmethod
+    async def verify_pasword_reset_code(user_id: int, code: str, db: AsyncSession) -> tuple[bool, str]:
+         """
+            Validatre a password reset code: Pending, not expired, matches.
+            On success: mark VERIFIED and return (True, "OK").
+         """
+         try:
+              verification = await EmailVerificationService.get_active_verification(user_id, db)
+              if not verification:
+                   return False, "No active reset found or expired"
+              if verification.verification_type != VerificationType.PASSWORD_RESET:
+                   return False, "Invalid verification type"
+              # For password reset, check reset_token
+              if not verification.reset_token or verification.reset_token != code:
+                   return False, "Invalid reset code"
+              
+              verification.status == VerificationStatus.VERIFIED
+              verification.verified_at = datetime.utcnow()
 
-
-
-
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+              await db.commit()
+              return True, "OK"
+         except Exception as e:
+              await db.rollback()
+              return False, "Reset verification failed"
+              
 
 
 

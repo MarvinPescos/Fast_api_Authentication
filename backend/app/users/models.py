@@ -45,7 +45,7 @@ class EmailVerification(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True)
+    email: Mapped[str] = mapped_column(String(255))  # No unique constraint - allow multiple records
     
     # Industry standard: Separate columns for different security patterns
     email_code: Mapped[Optional[str]] = mapped_column(

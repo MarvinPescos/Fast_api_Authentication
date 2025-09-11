@@ -1,6 +1,6 @@
 # FastAPI Authentication System 🔐
 
-A production-ready authentication system built with FastAPI. Provides secure user registration, email verification, login/logout, password reset, and comprehensive security features for modern web applications.
+A authentication system built with FastAPI. Provides secure user registration, email verification, login/logout, password reset, and comprehensive security features for modern web applications.
 
 ## 🚀 Features
 
@@ -337,4 +337,3 @@ redis-cli ping
 
 ---
 
-**FastAPI Authentication System** - Production-ready user authentication for modern web applications! 🔐✨

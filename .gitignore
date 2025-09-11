@@ -1,0 +1,42 @@
+# Root level gitignore for BalanceHub
+
+# Virtual Environment (at root level)
+env/
+venv/
+ENV/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+
+# Future frontend build artifacts (when you add frontend)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Docker volumes data
+docker-data/
+postgres-data/
+redis-data/

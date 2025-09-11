@@ -347,7 +347,7 @@ class AuthService:
                     try:
                         PASSWORD_RESET.labels(status="issued").inc()
                     except NameError:
-                        pass
+                        pass # (If you read this I got tired remove it if you want but if you want to make a custom error then go)
 
                 return {"message": "If that email exist, we've sent a reset link"}
 

@@ -206,7 +206,7 @@ class AuthService:
             email_sent = await send_verification_email(
                 to_email=user.email,
                 verification_code=verification.email_code,
-                user_name=user.user_name
+                user_name=user.username
             )
 
             if not email_sent:
@@ -253,10 +253,10 @@ class AuthService:
                 )
             
             if not verify_password(login_data.password, existing_user.hashed_password):
-                logger.warning(f"Login failed - Invalid Password:  {login_data.password}")
+                logger.warning(f"Login failed - Invalid Password for user: {login_data.email}")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid Password"
+                    detail="Invalid email or password"
                 )
             
             if not existing_user.is_active:
@@ -414,6 +414,62 @@ class AuthService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to reset Password"
             )
+
+    # async def facebook_login_initiate(self) -> dict:
+    #     """Start Facebook OAuth flow"""
+    #     try:
+    #         from app.auth.oauth_service import facebook_oauth
+    #         import secrets
+            
+    #         state = secrets.token_urlsafe(32)
+    #         authorization_url = facebook_oauth.get_authorization_url(state=state)
+            
+    #         logger.info("Facebook OAuth flow initiated")
+    #         return {
+    #             "authorization_url": authorization_url,
+    #             "state": state  # Frontend should store and verify this
+    #         }
+    #     except Exception as e:
+    #         logger.error(f"Facebook OAuth initiation failed: {str(e)}")
+    #         raise HTTPException(
+    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #             detail="Failed to initiate Facebook login"
+    #         )
+
+    # async def facebook_login_callback(self, code: str, state: str = None) -> tuple[User, str]:
+    #     """Complete Facebook OAuth flow"""
+    #     try:
+    #         from app.auth.oauth_service import facebook_oauth
+            
+    #         # Exchange code for token
+    #         token_data = await facebook_oauth.exchange_code_for_token(code)
+    #         access_token = token_data.get("access_token")
+            
+    #         if not access_token:
+    #             raise HTTPException(
+    #                 status_code=status.HTTP_400_BAD_REQUEST,
+    #                 detail="No access token received from Facebook"
+    #             )
+            
+    #         # Get user info from Facebook
+    #         facebook_user = await facebook_oauth.get_user_info(access_token)
+            
+    #         # Create or find user
+    #         user, jwt_token = await facebook_oauth.authenticate_or_create_user(
+    #             facebook_user, self
+    #         )
+            
+    #         logger.info(f"Facebook OAuth successful for user: {user.email}")
+    #         return user, jwt_token
+            
+    #     except HTTPException:
+    #         raise
+    #     except Exception as e:
+    #         logger.error(f"Facebook OAuth callback failed: {str(e)}")
+    #         raise HTTPException(
+    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #             detail="Facebook login failed"
+    #         )
 
 
     

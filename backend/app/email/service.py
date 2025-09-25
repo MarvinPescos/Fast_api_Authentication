@@ -80,9 +80,9 @@ class EmailService:
             return False
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
-            print(f"🚨 EMAIL ERROR: {str(e)}")
-            print(f"🔑 API Key starts with: {settings.SENDGRID_API_KEY[:10]}...")
-            print(f"📧 FROM: {settings.MAIL_FROM}")
+            if settings.DEBUG:
+                print(f"🚨 EMAIL ERROR: {str(e)}")
+                print(f"📧 FROM: {settings.MAIL_FROM}")
             return False
         
     async def send_password_reset_email(self, to_email: str, reset_link: str, user_name:  str = "User") -> bool:

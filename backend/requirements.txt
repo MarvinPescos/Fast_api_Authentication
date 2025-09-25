@@ -20,6 +20,8 @@ sentry-sdk[fastapi]
 structlog
 prometheus-client
 fastapi-cache2
+authlib
+httpx
 opentelemetry-api
 opentelemetry-sdk
 opentelemetry-instrumentation-fastapi

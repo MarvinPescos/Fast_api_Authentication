@@ -18,7 +18,7 @@ class UserCreate(BaseModel):
     @validator('username')
     def validate_username(cls, v: str) -> str:
         if not v.isalnum():
-           raise ValueError("Usernmae must be alphanumeric")
+           raise ValueError("Username must be alphanumeric")
         if len(v) < 3:
             raise ValueError("Username must be at least 3 characters long")
         return v

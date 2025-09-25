@@ -197,7 +197,7 @@ class EmailVerificationService:
               if not verification.reset_token or verification.reset_token != code:
                    return False, "Invalid reset code"
               
-              verification.status == VerificationStatus.VERIFIED
+              verification.status = VerificationStatus.VERIFIED
               verification.verified_at = datetime.utcnow()
 
               await db.commit()

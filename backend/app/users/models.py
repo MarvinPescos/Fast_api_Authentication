@@ -1,13 +1,10 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, Enum
 from typing import Optional, List
 from sqlalchemy.sql import func
 from datetime import datetime
-from app.core import settings
+from app.core import Base
 import enum
-
-class Base(DeclarativeBase):
-    pass
 
 class VerificationStatus(str, enum.Enum):
     PENDING = "pending"
@@ -30,9 +27,14 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+        # Oauth
+    facebook_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True, index=True)
+    google_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True, index=True)
+    oaut_provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     role: Mapped[str] = mapped_column(String(50), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
 
     email_verifications:Mapped[List["EmailVerification"]] = relationship(
         "EmailVerification",
@@ -45,9 +47,7 @@ class EmailVerification(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
-    email: Mapped[str] = mapped_column(String(255))  # No unique constraint - allow multiple records
-    
-    # Industry standard: Separate columns for different security patterns
+    email: Mapped[str] = mapped_column(String(255)) 
     email_code: Mapped[Optional[str]] = mapped_column(
         String(6), nullable=True, 
         comment="6-digit code for email verification"
@@ -79,15 +79,3 @@ class EmailVerification(Base):
             return self.reset_token
         else:
             return self.email_code
-
-
-
-
-
-
-
-
-
-
-
-

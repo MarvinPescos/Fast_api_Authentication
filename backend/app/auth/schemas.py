@@ -4,7 +4,7 @@ import re
 
 
 class LoginRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 class LoginResponse(BaseModel):

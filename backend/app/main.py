@@ -1,7 +1,7 @@
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -76,7 +76,9 @@ app.include_router(auth_router, prefix="/balance_hub/auth", tags=["Authenticatio
 
 @app.get("/test-errors")
 async def test_errors():
-    """Test endpoint to trigger sentry error tracking"""
+    """Test endpoint to trigger sentry error tracking - DEBUG only"""
+    if not settings.DEBUG:
+        raise HTTPException(status_code=404, detail="Not found")
     raise Exception("This is a test error for Sentry!")
 
 @app.get("/", tags=["Root"])

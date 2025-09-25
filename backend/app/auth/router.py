@@ -152,4 +152,40 @@ async def reset_password(
     """Reset password using verification code"""
     return await auth_service.reset_password(payload)
 
+# @router.get(
+#     "/facebook/login",
+#     description="Initiate Facebook OAuth login"
+# )
+# async def facebook_login(
+#     auth_service: AuthService = Depends(get_auth_service)
+# ):
+#     """Start Facebook OAuth flow"""
+#     return await auth_service.facebook_login_initiate()
+
+# @router.get(
+#     "/facebook/callback",
+#     response_model=LoginResponse,
+#     description="Facebook OAuth callback"
+# )
+# async def facebook_callback(
+#     response: Response,
+#     code: str,
+#     state: str = None,
+#     auth_service: AuthService = Depends(get_auth_service)
+# ):
+#     """Handle Facebook OAuth callback"""
+#     user, token = await auth_service.facebook_login_callback(code, state)
+    
+#     response.set_cookie(
+#         key="access_token",
+#         value=token,
+#         httponly=True,
+#         secure=True,
+#         samesite="lax"
+#     )
+    
+#     return LoginResponse(
+#         user=UserResponse.model_validate(user, from_attributes=True),
+#         message="Facebook login successful"
+#     )
 

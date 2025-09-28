@@ -24,10 +24,10 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status == 401) {
       console.error("Unauthorized, redirecting to login...");
-      window.location.href = "/login"
+      window.location.href = "/login";
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
 );
 
-export default api
+export default api;

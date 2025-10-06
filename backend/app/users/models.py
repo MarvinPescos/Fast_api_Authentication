@@ -24,13 +24,13 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255), )
-    full_name: Mapped[str] = mapped_column(String(255))
+    full_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True) #todo: need to rollback alembic added nullable true
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
         # Oauth
     facebook_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True, index=True)
     google_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True, index=True)
-    oaut_provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    oauth_provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     role: Mapped[str] = mapped_column(String(50), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

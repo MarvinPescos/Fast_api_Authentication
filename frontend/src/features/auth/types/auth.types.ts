@@ -1,15 +1,18 @@
-import { z } from "zod";
+import type { User } from "../../users/schemas/users.schema";
 
-export const userSchema = z.object({
-  id: z.number(),
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
-  email: z.string().email(),
-  full_name: z.string().optional(),
-  is_active: z.boolean(),
-  role: z.enum(["user", "admin", "moderator"]),
-  created_at: z.string(),
-  updated_at: z.string().optional(),
-});
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface AuthAction {
+  setUser: (user: User | null) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  logout: () => void;
+  clearError: () => void
+}
+
+export type AuthStore = AuthState & AuthAction

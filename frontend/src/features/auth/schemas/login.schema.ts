@@ -10,6 +10,6 @@ export const loginSchema = z.object({
      .regex(/\d/, "Password must have at least 1 number"),
   });
 
-export type LoginRequest = z.infer<typeof loginSchema>
+export type loginRequest = z.infer<typeof loginSchema>
 
   

@@ -13,7 +13,7 @@ const api: AxiosInstance = axios.create({
 
 //request interceptor
 api.interceptors.request.use(
-  (config) => {
+   (config) => {
     return config;
   },
   (error) => Promise.reject(error)
@@ -21,7 +21,7 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response.data,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     if (error.response?.status == 401) {
       console.error("Unauthorized, redirecting to login...");
       window.location.href = "/login";

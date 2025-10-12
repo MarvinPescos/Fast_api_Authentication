@@ -1,6 +1,6 @@
 from pathlib import Path
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from fastapi_mail.errors import ConnectionErrors
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, To, From, Content
 from jinja2 import Environment, FileSystemLoader
 import logging
 
@@ -10,29 +10,23 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
 
-    """Email service using fastapi-mail with SendGrid and Jinja2 templates"""
+    """Email service using SendGrid official SDK with Jinja2 templates"""
 
     def __init__(self):
-        #Configure fastapi-mail with SendGrid
-        self.conf = ConnectionConfig(
-            MAIL_USERNAME="apikey",
-            MAIL_PASSWORD=settings.SENDGRID_API_KEY,
-            MAIL_FROM=settings.MAIL_FROM,
-            MAIL_FROM_NAME=settings.MAIL_FROM_NAME,
-            MAIL_PORT=587,
-            MAIL_SERVER="smtp.sendgrid.net",
-            MAIL_STARTTLS=True,
-            MAIL_SSL_TLS=False,
-            USE_CREDENTIALS=True,
-            VALIDATE_CERTS=True
-        )
-        self.fastmail = FastMail(self.conf)
+        # Debug: Check if API key is loaded
+        api_key = settings.SENDGRID_API_KEY
         
-        # Configure Jinja2 templates - Industry Standard Pattern
+        if not api_key or api_key == "SG.your_sendgrid_api_key":
+            logger.error(f"⚠️ SENDGRID_API_KEY not configured properly!")
+        else:
+            logger.info(f"✅ SendGrid API Key loaded: {api_key[:10]}... (length: {len(api_key)})")
+        
+        self.sg_client = SendGridAPIClient(api_key)
+      
         template_dir = Path(__file__).parent.parent / "templates" / "emails"
         self.template_env = Environment(
             loader=FileSystemLoader(template_dir),
-            autoescape=True,  # Security: Auto-escape HTML
+            autoescape=True,  
             trim_blocks=True,
             lstrip_blocks=True
         )
@@ -43,7 +37,7 @@ class EmailService:
             verification_code: str,
             user_name: str ="User"
     )-> bool:
-        """Send email verification code using templatee"""
+        """Send email verification code using SendGrid SDK"""
         try:
             context = {
                 'app_name': settings.APP_NAME,
@@ -55,37 +49,50 @@ class EmailService:
             html_template = self.template_env.get_template('verification.html')
             text_template = self.template_env.get_template('verification.txt')
 
-            html_context = html_template.render(**context)
-            text_context = text_template.render(**context)
+            html_content = html_template.render(**context)
+            text_content = text_template.render(**context)
 
-            message = MessageSchema(
-                subject=f"Verify your {settings.APP_NAME} account ",
-                recipients=[to_email],
-                body=text_context,
-                html=html_context,
-                subtype=MessageType.html
+            # Create SendGrid message
+            message = Mail(
+                from_email=From(settings.MAIL_FROM, settings.MAIL_FROM_NAME),
+                to_emails=To(to_email),
+                subject=f"Verify your {settings.APP_NAME} account",
+                plain_text_content=Content("text/plain", text_content),
+                html_content=Content("text/html", html_content)
             )
 
             logger.info(f"Attempting to send verification email to {to_email}")
 
-            await self.fastmail.send_message(message)
-
-            logger.info(f"Email sent to succesfully to {to_email} via SendGrid")
-
-            return True
+            # Send email via SendGrid
+            response = self.sg_client.send(message)
+            
+            if response.status_code in [200, 201, 202]:
+                logger.info(f"Email sent successfully to {to_email} via SendGrid")
+                return True
+            else:
+                logger.error(f"SendGrid returned status {response.status_code}")
+                return False
         
-        except ConnectionErrors as e:
-            logger.error(f"SendGrid connection error for {to_email}: {str(e)}")
-            print(f"🚨 CONNECTION ERROR: {str(e)}")
-            return False
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
-            if settings.DEBUG:
-                print(f"🚨 EMAIL ERROR: {str(e)}")
-                print(f"📧 FROM: {settings.MAIL_FROM}")
+            
+            # Enhanced debug output
+            print(f"🚨 EMAIL ERROR: {str(e)}")
+            print(f"📧 FROM: {settings.MAIL_FROM}")
+            print(f"📧 TO: {to_email}")
+            print(f"🔑 API Key (first 10 chars): {settings.SENDGRID_API_KEY[:10] if settings.SENDGRID_API_KEY else 'NONE'}")
+            
+            # Check if it's an auth error
+            if "401" in str(e) or "Unauthorized" in str(e):
+                print("❌ 401 ERROR MEANS:")
+                print("   1. API Key is wrong/expired")
+                print("   2. API Key doesn't have 'Mail Send' permission")
+                print("   3. .env file not loaded correctly")
+            
             return False
         
     async def send_password_reset_email(self, to_email: str, reset_link: str, user_name:  str = "User") -> bool:
+        """Send password reset email using SendGrid SDK"""
         try:
             context = {
                 'app_name': settings.APP_NAME,
@@ -96,17 +103,30 @@ class EmailService:
 
             html_template = self.template_env.get_template('reset_password.html')
             text_template = self.template_env.get_template('reset_password.txt')
-            html_context = html_template.render(**context)
-            text_context = text_template.render(**context)
-            message = MessageSchema(
+            html_content = html_template.render(**context)
+            text_content = text_template.render(**context)
+            
+            # Create SendGrid message
+            message = Mail(
+                from_email=From(settings.MAIL_FROM, settings.MAIL_FROM_NAME),
+                to_emails=To(to_email),
                 subject=f"Reset your {settings.APP_NAME} password",
-                recipients=[to_email],
-                body=text_context,
-                html=html_context,
-                subtype=MessageType.html
+                plain_text_content=Content("text/plain", text_content),
+                html_content=Content("text/html", html_content)
             )
-            await self.fastmail.send_message(message)
-            return True
+            
+            logger.info(f"Attempting to send password reset email to {to_email}")
+            
+            # Send email via SendGrid
+            response = self.sg_client.send(message)
+            
+            if response.status_code in [200, 201, 202]:
+                logger.info(f"Password reset email sent successfully to {to_email}")
+                return True
+            else:
+                logger.error(f"SendGrid returned status {response.status_code}")
+                return False
+                
         except Exception as e:
             logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
             return False

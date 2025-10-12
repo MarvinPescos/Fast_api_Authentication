@@ -40,9 +40,9 @@ class Settings(BaseSettings):
     REDIS_PORT: str = Field(default="6379", description="Redis port")
     REDIS_URL: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
 
-    FACEBOOK_CLIENT_ID:str = Field(..., description="Facebook App ID")
-    FACEBOOK_CLIENT_SECRET: str = Field(..., description="Facebook App Secret")
-    FACEBOOK_REDIRECT_URI: str = Field(..., description="Facebook OAuth redirect uri")
+    # FACEBOOK_CLIENT_ID:str = Field(..., description="Facebook App ID")
+    # FACEBOOK_CLIENT_SECRET: str = Field(..., description="Facebook App Secret")
+    # FACEBOOK_REDIRECT_URI: str = Field(..., description="Facebook OAuth redirect uri")
 
     SENTRY_DSN: str = Field(..., description="Your Sentry_dsn key")
 

@@ -15,4 +15,13 @@ export const registerSchema = z.object({
     fullname: z.string().optional()
   })
 
+  // Registration response - returns user_id only (user not logged in yet)
+export const registrationResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  user_id: z.number().optional(),
+  next_step: z.string()
+})
+
 export type registerRequest = z.infer<typeof registerSchema>;
+export type registrationResponse = z.infer<typeof registrationResponseSchema>;

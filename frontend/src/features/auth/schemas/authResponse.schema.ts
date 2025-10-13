@@ -9,3 +9,4 @@ export const authResponseSchema = z.object({
 
 export type authResponse = z.infer<typeof authResponseSchema>;
 
+

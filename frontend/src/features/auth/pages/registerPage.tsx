@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../../../shared/components/Button";
 import { useForm } from "../../../shared/components/Form";
 
-import { useAuth } from "../hooks/authHooks";
+import { authHooks } from "../hooks/authHooks";
 import { type registerRequest } from "../schemas/register.schema";
 
 export function registerPage() {
+    const {register, isLoading, error, clearError}=  authHooks()
     const navigate = useNavigate();
-    const {register, isLoading, error, clearError}=  useAuth()
     const {form: userData, handleChange} = useForm<registerRequest>({
         username: "",
         email: "",
@@ -20,10 +20,10 @@ export function registerPage() {
         e.preventDefault();
         try{
             const response = await register(userData);
-            if (response.success && response.user.id){
-                navigate("/mockBoard", {
+            if (response.success && response.user_id){
+                navigate("/verify-email", {
                     state: {
-                        userId: response.user.id,
+                        userId: response.user_id,  // ← Changed from response.user.id
                         email: userData.email
                     },
                 });

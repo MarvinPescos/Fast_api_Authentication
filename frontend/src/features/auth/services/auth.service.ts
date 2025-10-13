@@ -6,13 +6,13 @@ import { authResponseSchema, type authResponse } from "../schemas/authResponse.s
 export const authService = {
     async login(credentials: loginRequest): Promise<authResponse> {
         const validated = loginSchema.parse(credentials);
-        const response = await api.post('/auth/login', validated)
+        const response = await api.post('/fullstack_authentication/auth/login', validated)
         return authResponseSchema.parse(response)
     },
 
     async register(data: registerRequest): Promise<authResponse> {
         const validated = registerSchema.parse(data)
-        const response = await api.post('/auth/register', validated)
+        const response = await api.post('/fullstack_authentication/auth/register', validated)
         return authResponseSchema.parse(response)
     },
 

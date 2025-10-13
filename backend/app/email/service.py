@@ -1,6 +1,6 @@
 from pathlib import Path
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, To, From, Content
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from jinja2 import Environment, FileSystemLoader
 import logging
 
@@ -10,18 +10,18 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
 
-    """Email service using SendGrid official SDK with Jinja2 templates"""
+    """Email service using Brevo (Sendinblue) API with Jinja2 templates"""
 
     def __init__(self):
-        # Debug: Check if API key is loaded
-        api_key = settings.SENDGRID_API_KEY
+        # Configure Brevo API
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key['api-key'] = settings.BREVO_API_KEY
         
-        if not api_key or api_key == "SG.your_sendgrid_api_key":
-            logger.error(f"⚠️ SENDGRID_API_KEY not configured properly!")
-        else:
-            logger.info(f"✅ SendGrid API Key loaded: {api_key[:10]}... (length: {len(api_key)})")
+        self.api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+            sib_api_v3_sdk.ApiClient(configuration)
+        )
         
-        self.sg_client = SendGridAPIClient(api_key)
+        logger.info(f"✅ Brevo API configured successfully")
       
         template_dir = Path(__file__).parent.parent / "templates" / "emails"
         self.template_env = Environment(
@@ -37,7 +37,7 @@ class EmailService:
             verification_code: str,
             user_name: str ="User"
     )-> bool:
-        """Send email verification code using SendGrid SDK"""
+        """Send email verification code using Brevo API"""
         try:
             context = {
                 'app_name': settings.APP_NAME,
@@ -52,47 +52,35 @@ class EmailService:
             html_content = html_template.render(**context)
             text_content = text_template.render(**context)
 
-            # Create SendGrid message
-            message = Mail(
-                from_email=From(settings.MAIL_FROM, settings.MAIL_FROM_NAME),
-                to_emails=To(to_email),
+            # Create Brevo email
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": to_email, "name": user_name}],
+                sender={"name": settings.MAIL_FROM_NAME, "email": settings.MAIL_FROM},
                 subject=f"Verify your {settings.APP_NAME} account",
-                plain_text_content=Content("text/plain", text_content),
-                html_content=Content("text/html", html_content)
+                html_content=html_content,
+                text_content=text_content
             )
 
             logger.info(f"Attempting to send verification email to {to_email}")
 
-            # Send email via SendGrid
-            response = self.sg_client.send(message)
+            # Send email via Brevo
+            api_response = self.api_instance.send_transac_email(send_smtp_email)
             
-            if response.status_code in [200, 201, 202]:
-                logger.info(f"Email sent successfully to {to_email} via SendGrid")
-                return True
-            else:
-                logger.error(f"SendGrid returned status {response.status_code}")
-                return False
+            logger.info(f"✅ Email sent successfully to {to_email} via Brevo (Message ID: {api_response.message_id})")
+            return True
         
+        except ApiException as e:
+            logger.error(f"Brevo API error: {e}")
+            print(f"🚨 EMAIL ERROR: {e}")
+            return False
+            
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
-            
-            # Enhanced debug output
             print(f"🚨 EMAIL ERROR: {str(e)}")
-            print(f"📧 FROM: {settings.MAIL_FROM}")
-            print(f"📧 TO: {to_email}")
-            print(f"🔑 API Key (first 10 chars): {settings.SENDGRID_API_KEY[:10] if settings.SENDGRID_API_KEY else 'NONE'}")
-            
-            # Check if it's an auth error
-            if "401" in str(e) or "Unauthorized" in str(e):
-                print("❌ 401 ERROR MEANS:")
-                print("   1. API Key is wrong/expired")
-                print("   2. API Key doesn't have 'Mail Send' permission")
-                print("   3. .env file not loaded correctly")
-            
             return False
         
     async def send_password_reset_email(self, to_email: str, reset_link: str, user_name:  str = "User") -> bool:
-        """Send password reset email using SendGrid SDK"""
+        """Send password reset email using Brevo API"""
         try:
             context = {
                 'app_name': settings.APP_NAME,
@@ -106,27 +94,27 @@ class EmailService:
             html_content = html_template.render(**context)
             text_content = text_template.render(**context)
             
-            # Create SendGrid message
-            message = Mail(
-                from_email=From(settings.MAIL_FROM, settings.MAIL_FROM_NAME),
-                to_emails=To(to_email),
+            # Create Brevo email
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": to_email, "name": user_name}],
+                sender={"name": settings.MAIL_FROM_NAME, "email": settings.MAIL_FROM},
                 subject=f"Reset your {settings.APP_NAME} password",
-                plain_text_content=Content("text/plain", text_content),
-                html_content=Content("text/html", html_content)
+                html_content=html_content,
+                text_content=text_content
             )
             
             logger.info(f"Attempting to send password reset email to {to_email}")
             
-            # Send email via SendGrid
-            response = self.sg_client.send(message)
+            # Send email via Brevo
+            api_response = self.api_instance.send_transac_email(send_smtp_email)
             
-            if response.status_code in [200, 201, 202]:
-                logger.info(f"Password reset email sent successfully to {to_email}")
-                return True
-            else:
-                logger.error(f"SendGrid returned status {response.status_code}")
-                return False
+            logger.info(f"✅ Password reset email sent successfully to {to_email} (Message ID: {api_response.message_id})")
+            return True
                 
+        except ApiException as e:
+            logger.error(f"Brevo API error: {e}")
+            return False
+            
         except Exception as e:
             logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
             return False

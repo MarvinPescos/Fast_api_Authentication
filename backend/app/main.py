@@ -72,7 +72,7 @@ app.middleware("http")(metrics_middleware)
 app.get("/metrics")(get_metrics)
 
 #Include routers
-app.include_router(auth_router, prefix="/balance_hub/auth", tags=["Authentication"])
+app.include_router(auth_router, prefix="/fullstack_authentication/auth", tags=["Authentication"])
 
 @app.get("/test-errors")
 async def test_errors():

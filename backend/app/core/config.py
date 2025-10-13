@@ -32,9 +32,9 @@ class Settings(BaseSettings):
 
     EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES: int = Field(default=15, ge=5, le=60, description="Verification code expiry time")
 
-    MAIL_FROM: str = Field(..., description="Your verified SendGrid email address")
+    MAIL_FROM: str = Field(..., description="Your verified sender email address")
     MAIL_FROM_NAME: str = Field(default="Financial Tracker", description="Display name for sender")
-    SENDGRID_API_KEY: str = Field(..., description="SendGrid API key")
+    BREVO_API_KEY: str = Field(..., description="Brevo API key")
 
     REDIS_HOST: str = Field(default="localhost", description="Redis host")
     REDIS_PORT: str = Field(default="6379", description="Redis port")

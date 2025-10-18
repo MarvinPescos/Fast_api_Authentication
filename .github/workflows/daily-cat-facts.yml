@@ -1,0 +1,22 @@
+name: Daily Cat Facts Automation
+
+on:
+  schedule:
+    # Run daily at 9:00 AM UTC (adjust as needed)
+    - cron: "0 9 * * *"
+  workflow_dispatch: # Allow manual trigger from Actions tab
+
+jobs:
+  send-cat-facts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Daily Cat Facts
+        run: |
+          curl -X POST "${{ secrets.API_BASE_URL }}/fullstack_authentication/activities/cat-facts/send-daily" \
+            -H "Content-Type: application/json" \
+            -d '{"api_key": "${{ secrets.API_KEY }}"}'
+
+      - name: Check Status
+        if: failure()
+        run: echo "Failed to send daily cat facts. Check API logs."

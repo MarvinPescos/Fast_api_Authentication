@@ -6,10 +6,12 @@ import re
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    totp_code: str = Field(default=None, description="6-digit TOTP code (required if 2FA is enabled)")
 
 class LoginResponse(BaseModel):
     user: UserResponse
     message: str
+    requires_2fa: bool = Field(default=False, description="Whether 2FA verification is required")
 
 class ForgetPasswordRequest(BaseModel):
     email: EmailStr

@@ -16,41 +16,42 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, ge=1, le=1440)
 
     # App Settings
-    APP_NAME: str = Field(default="Financial Tracker", description="Application name")
+    APP_NAME: str = Field(default="Mini App", description="Application name")
     DEBUG: bool = Field(default=False, description="Debug mode" )
     FRONTEND_URL: str = Field(default="http://localhost:5173", description="Frontend application URL")
 
-    ALLOWED_ORIGINS: List[str] = Field(
-        default=[
-            "http://localhost:3000", 
-            "http://localhost:5173",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5173"
-        ], 
-        description="Allowed CORS origins"
-    )
+    ALLOWED_ORIGINS: List[str] = Field(..., description="Allowed CORS origins")
 
     EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES: int = Field(default=15, ge=5, le=60, description="Verification code expiry time")
 
     MAIL_FROM: str = Field(..., description="Your verified sender email address")
-    MAIL_FROM_NAME: str = Field(default="Financial Tracker", description="Display name for sender")
+    MAIL_FROM_NAME: str = Field(default="Mini App", description="Display name for sender")
     BREVO_API_KEY: str = Field(..., description="Brevo API key")
 
     REDIS_HOST: str = Field(default="localhost", description="Redis host")
     REDIS_PORT: str = Field(default="6379", description="Redis port")
     REDIS_URL: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
 
-    # FACEBOOK_CLIENT_ID:str = Field(..., description="Facebook App ID")
-    # FACEBOOK_CLIENT_SECRET: str = Field(..., description="Facebook App Secret")
-    # FACEBOOK_REDIRECT_URI: str = Field(..., description="Facebook OAuth redirect uri")
+    FACEBOOK_APP_ID:str = Field(..., description="Facebook App ID")
+    FACEBOOK_APP_SECRET: str = Field(..., description="Facebook App Secret")
+    FACEBOOK_REDIRECT_URI: str = Field(..., description="Facebook OAuth redirect uri")
+
+    # Google OAuth (Optional - for Google Sign-In)
+    GOOGLE_CLIENT_ID: str = Field(..., description="Google OAuth Client ID")
+    GOOGLE_CLIENT_SECRET: str = Field(..., description="Google OAuth Client Secret")
+    GOOGLE_REDIRECT_URI: str = Field(..., description="Google OAuth redirect uri")
 
     SENTRY_DSN: str = Field(..., description="Your Sentry_dsn key")
+
+    OPENTDB_API_URL: str = Field(..., description="Open Trivia DB URL")
+    JOKE_API_URL: str = Field(..., description="JOKE API URL")
+    CAT_FACT_API: str = Field(default="https://catfact.ninja/fact", description="Cat Fact API URL")
 
     @property
     def DATABASE_URL(self) -> str:
       """Get database URL for async operations"""
       return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-    
+
     @property
     def SYNC_DATABASE_URL(self) -> str:
         """Get database URL for sync operations (migrations)"""
@@ -62,4 +63,3 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 settings = Settings()
- 

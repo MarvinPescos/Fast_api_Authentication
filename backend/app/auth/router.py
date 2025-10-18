@@ -3,9 +3,9 @@ from fastapi import APIRouter , status, Depends, HTTPException, Response, Reques
 from app.auth import LoginResponse, LoginRequest
 from app.auth.dependencies import get_auth_service, get_current_user
 from app.auth.service import AuthService
-from app.users import User, UserCreate, UserResponse, UserUpdate
+from app.users import User, UserCreate, UserResponse, UserUpdate, ProfileUpdateRequest
 from app.core import limiter, resend_verification_limiter
-from app.email_verification import RegistrationResponse, EmailVerificationResponse, EmailVerificationCode
+from app.email_verification import RegistrationResponse, EmailVerificationResponse, EmailVerificationCode, ResendVerification
 from app.auth.schemas import ForgetPasswordRequest, ResetPasswordRequest
 
 router = APIRouter()
@@ -52,11 +52,11 @@ async def verify_email(
 @resend_verification_limiter
 async def resend_verification(
     request: Request,
-    user_id: int,
+    resend_data: ResendVerification,
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """resend verification to email that requested"""
-    return await auth_service.resend_verification(user_id)
+    return await auth_service.resend_verification(resend_data.user_id)
 
 
 
@@ -81,7 +81,9 @@ async def login(
         value=token,
         httponly=True,
         secure=True,
-        samesite="lax"
+        samesite="none",
+        max_age=3600 * 24,
+        domain=None
     )
 
     return LoginResponse(
@@ -106,6 +108,35 @@ async def user_update(
     updated_user = await auth_service.update_user(current_user, user_data)
     return UserResponse.model_validate(updated_user, from_attributes=True)
 
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    description="Get current user from JWT cookie"
+)
+async def get_me(
+    current_user: User = Depends(get_current_user)
+):
+    """Get current authenticated user"""
+    return UserResponse.model_validate(current_user, from_attributes=True)
+
+
+@router.put(
+    "/profile",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    description="Update user profile"
+)
+async def update_profile(
+    profile_data: ProfileUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Update user profile including username, email, full_name, and password"""
+    updated_user = await auth_service.update_profile(current_user, profile_data)
+    return UserResponse.model_validate(updated_user, from_attributes=True)
 
 
 @router.post(
@@ -152,40 +183,4 @@ async def reset_password(
     """Reset password using verification code"""
     return await auth_service.reset_password(payload)
 
-# @router.get(
-#     "/facebook/login",
-#     description="Initiate Facebook OAuth login"
-# )
-# async def facebook_login(
-#     auth_service: AuthService = Depends(get_auth_service)
-# ):
-#     """Start Facebook OAuth flow"""
-#     return await auth_service.facebook_login_initiate()
-
-# @router.get(
-#     "/facebook/callback",
-#     response_model=LoginResponse,
-#     description="Facebook OAuth callback"
-# )
-# async def facebook_callback(
-#     response: Response,
-#     code: str,
-#     state: str = None,
-#     auth_service: AuthService = Depends(get_auth_service)
-# ):
-#     """Handle Facebook OAuth callback"""
-#     user, token = await auth_service.facebook_login_callback(code, state)
-    
-#     response.set_cookie(
-#         key="access_token",
-#         value=token,
-#         httponly=True,
-#         secure=True,
-#         samesite="lax"
-#     )
-    
-#     return LoginResponse(
-#         user=UserResponse.model_validate(user, from_attributes=True),
-#         message="Facebook login successful"
-#     )
 

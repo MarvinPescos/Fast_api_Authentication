@@ -41,6 +41,36 @@ class UserUpdate(BaseModel):
     password: str = Field(..., min_length=8)
     full_name: Optional[str] = Field(None, max_length=100)
 
+class ProfileUpdateRequest(BaseModel):
+    """Schema for updating user profile - all fields optional"""
+    username: Optional[str] = Field(None, min_length=3, max_length=50, description="Username (alphanumeric only)")
+    email: Optional[EmailStr] = Field(None, description="Email address")
+    full_name: Optional[str] = Field(None, max_length=100, description="Full name")
+    current_password: Optional[str] = Field(None, description="Current password (required for email/password change)")
+    new_password: Optional[str] = Field(None, min_length=8, description="New password")
+    
+    @validator('username')
+    def validate_username(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if not v.isalnum():
+                raise ValueError("Username must be alphanumeric")
+            if len(v) < 3:
+                raise ValueError("Username must be at least 3 characters long")
+        return v
+        
+    @validator('new_password')
+    def validate_new_password(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if len(v) < 8:
+                raise ValueError("Password must be at least 8 characters")
+            if not re.search(r"\d", v):
+                raise ValueError("Password must have at least 1 number")
+            if not re.search(r"[A-Z]", v):
+                raise ValueError("Password must have at least 1 uppercase letter")
+            if not re.search(r"[a-z]", v):
+                raise ValueError("Password must have at least 1 lowercase letter")
+        return v
+
 class UserResponse(BaseModel):
     id: int = Field(..., description="User id")
     username: str = Field(..., description="Username")

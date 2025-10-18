@@ -10,6 +10,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 from app.users.models import Base
+# Import all models so alembic can detect them
+from app.users.models import User, OAuthAccount
+from app.email_verification.models import EmailVerification
+from app.activities.campus_building_rater.models import Building, Rating
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

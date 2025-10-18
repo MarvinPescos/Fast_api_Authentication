@@ -18,9 +18,9 @@ services:
     image: postgres:15-alpine
     container_name: fullstack_auth_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: blood_rageOST1
-      POSTGRES_DB: fullstack_auth
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:

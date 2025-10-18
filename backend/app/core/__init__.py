@@ -4,6 +4,7 @@ from app.core.security import hash_password, verify_access_token, verify_passwor
 from app.core.rate_limiter import limiter, resend_verification_limiter
 from app.core.middleware import metrics_middleware
 from app.core.metrics import USER_REGISTRATION, EMAIL_VERIFICATIONS, PASSWORD_RESET
+from app.core.oauth_state import oauth_state_manager
 
 __all__ = [
     "settings",
@@ -20,4 +21,5 @@ __all__ = [
     "USER_REGISTRATION",
     "EMAIL_VERIFICATIONS",
     "PASSWORD_RESET",
+    "oauth_state_manager"
     ]

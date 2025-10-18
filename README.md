@@ -1,4 +1,4 @@
-# Full-Stack Authentication System
+# Mini App
 
 ## Overview
 
@@ -45,6 +45,7 @@ Visit http://localhost:5173 for the frontend and http://localhost:8000/docs for 
 This application follows a modern, scalable architecture with clear separation of concerns:
 
 ### Backend Architecture
+
 - **API Layer**: FastAPI with RESTful endpoints
 - **Service Layer**: Business logic and authentication services
 - **Repository Layer**: Data access abstraction
@@ -54,6 +55,7 @@ This application follows a modern, scalable architecture with clear separation o
 - **Monitoring**: Sentry for error tracking, Prometheus for metrics
 
 ### Frontend Architecture
+
 - **UI Framework**: React 19 with TypeScript
 - **State Management**: Zustand for global state
 - **Routing**: React Router v7
@@ -65,6 +67,7 @@ This application follows a modern, scalable architecture with clear separation o
 ## Features
 
 ### Authentication and Authorization
+
 - **User Registration**: Secure account creation with input validation
 - **Email Verification**: Six-digit verification code system with expiration
 - **User Login**: JWT-based authentication with HTTP-only cookies
@@ -73,6 +76,7 @@ This application follows a modern, scalable architecture with clear separation o
 - **Profile Management**: User information update capabilities
 
 ### Security Features
+
 - **Password Hashing**: bcrypt with automatic salt generation
 - **JWT Authentication**: Stateless authentication with configurable expiration
 - **Rate Limiting**: Redis-backed rate limiting to prevent brute force attacks
@@ -82,6 +86,7 @@ This application follows a modern, scalable architecture with clear separation o
 - **Email Security**: Separate verification tokens for different operations
 
 ### Infrastructure Features
+
 - **Database Migrations**: Alembic for version-controlled schema changes
 - **Docker Support**: Containerized PostgreSQL and Redis services
 - **Health Checks**: System health monitoring endpoints
@@ -90,6 +95,7 @@ This application follows a modern, scalable architecture with clear separation o
 - **Structured Logging**: Comprehensive logging with contextual information
 
 ### OAuth Integration (Not yet implemented)
+
 - Database schema includes OAuth provider fields (Google, Facebook)
 - OAuth service foundation implemented (currently commented out)
 - Ready for third-party authentication integration
@@ -97,34 +103,36 @@ This application follows a modern, scalable architecture with clear separation o
 ## Technology Stack
 
 ### Backend Technologies
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Python | 3.11+ | Primary programming language |
-| FastAPI | Latest | Web framework for building APIs |
-| SQLAlchemy | Latest | Async ORM for database operations |
-| PostgreSQL | 15+ | Primary database |
-| Redis | 7+ | Caching and rate limiting |
-| Alembic | Latest | Database migration tool |
-| Pydantic | Latest | Data validation and settings management |
-| Passlib/Bcrypt | Latest | Password hashing |
-| Python-JOSE | Latest | JWT token generation and validation |
-| Brevo SDK | Latest | Email service integration |
-| Sentry SDK | Latest | Error tracking |
-| Prometheus Client | Latest | Metrics collection |
-| SlowAPI | Latest | Rate limiting |
-| Structlog | Latest | Structured logging |
+
+| Technology        | Version | Purpose                                 |
+| ----------------- | ------- | --------------------------------------- |
+| Python            | 3.11+   | Primary programming language            |
+| FastAPI           | Latest  | Web framework for building APIs         |
+| SQLAlchemy        | Latest  | Async ORM for database operations       |
+| PostgreSQL        | 15+     | Primary database                        |
+| Redis             | 7+      | Caching and rate limiting               |
+| Alembic           | Latest  | Database migration tool                 |
+| Pydantic          | Latest  | Data validation and settings management |
+| Passlib/Bcrypt    | Latest  | Password hashing                        |
+| Python-JOSE       | Latest  | JWT token generation and validation     |
+| Brevo SDK         | Latest  | Email service integration               |
+| Sentry SDK        | Latest  | Error tracking                          |
+| Prometheus Client | Latest  | Metrics collection                      |
+| SlowAPI           | Latest  | Rate limiting                           |
+| Structlog         | Latest  | Structured logging                      |
 
 ### Frontend Technologies
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 19.1.1 | UI library |
-| TypeScript | 5.8.3 | Type-safe JavaScript |
-| Vite | 7.1.6 | Build tool and dev server |
-| React Router | 7.9.1 | Client-side routing |
-| Zustand | 5.0.8 | State management |
-| Axios | 1.12.2 | HTTP client |
-| Zod | 4.1.11 | Schema validation |
-| Tailwind CSS | 4.1.13 | Utility-first CSS framework |
+
+| Technology   | Version | Purpose                     |
+| ------------ | ------- | --------------------------- |
+| React        | 19.1.1  | UI library                  |
+| TypeScript   | 5.8.3   | Type-safe JavaScript        |
+| Vite         | 7.1.6   | Build tool and dev server   |
+| React Router | 7.9.1   | Client-side routing         |
+| Zustand      | 5.0.8   | State management            |
+| Axios        | 1.12.2  | HTTP client                 |
+| Zod          | 4.1.11  | Schema validation           |
+| Tailwind CSS | 4.1.13  | Utility-first CSS framework |
 
 ## Prerequisites
 
@@ -139,6 +147,7 @@ Before installation, ensure you have the following installed:
 - **Git**: For version control
 
 ### External Services Required
+
 - **Brevo Account**: For email service (free tier available)
 - **Sentry Account**: For error tracking (free tier available)
 
@@ -231,7 +240,8 @@ EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES=15
 Update the API base URL in `frontend/src/shared/utils/constant.ts`:
 
 ```typescript
-export const API_BASE_URL = "http://localhost:8000/fullstack_authentication/auth";
+export const API_BASE_URL =
+  "http://localhost:8000/fullstack_authentication/auth";
 ```
 
 ## Database Setup
@@ -258,6 +268,7 @@ docker ps
 If you prefer manual installation:
 
 1. **Install PostgreSQL 15+**
+
    ```bash
    # Create database
    createdb fullstack_auth
@@ -301,6 +312,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The backend API will be available at:
+
 - **API Base**: http://localhost:8000
 - **Interactive API Documentation (Swagger)**: http://localhost:8000/docs
 - **Alternative API Documentation (ReDoc)**: http://localhost:8000/redoc
@@ -342,24 +354,24 @@ npm run preview
 
 ### Authentication Endpoints
 
-| Method | Endpoint | Description | Rate Limit |
-|--------|----------|-------------|------------|
-| `POST` | `/fullstack_authentication/auth/register` | Register new user account | 5/minute |
-| `POST` | `/fullstack_authentication/auth/verify-email` | Verify email with 6-digit code | None |
-| `POST` | `/fullstack_authentication/auth/resend-verification` | Resend verification email | Custom |
-| `POST` | `/fullstack_authentication/auth/login` | Authenticate user and receive JWT | 10/minute |
-| `POST` | `/fullstack_authentication/auth/logout` | Terminate user session | None |
-| `PUT` | `/fullstack_authentication/auth/update-user` | Update user profile information | None |
-| `POST` | `/fullstack_authentication/auth/password/forget` | Request password reset email | 5/minute |
-| `POST` | `/fullstack_authentication/auth/password/reset` | Reset password with verification code | 10/hour |
+| Method | Endpoint                                             | Description                           | Rate Limit |
+| ------ | ---------------------------------------------------- | ------------------------------------- | ---------- |
+| `POST` | `/fullstack_authentication/auth/register`            | Register new user account             | 5/minute   |
+| `POST` | `/fullstack_authentication/auth/verify-email`        | Verify email with 6-digit code        | None       |
+| `POST` | `/fullstack_authentication/auth/resend-verification` | Resend verification email             | Custom     |
+| `POST` | `/fullstack_authentication/auth/login`               | Authenticate user and receive JWT     | 10/minute  |
+| `POST` | `/fullstack_authentication/auth/logout`              | Terminate user session                | None       |
+| `PUT`  | `/fullstack_authentication/auth/update-user`         | Update user profile information       | None       |
+| `POST` | `/fullstack_authentication/auth/password/forget`     | Request password reset email          | 5/minute   |
+| `POST` | `/fullstack_authentication/auth/password/reset`      | Reset password with verification code | 10/hour    |
 
 ### System Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | API information and version |
-| `GET` | `/health` | Application health status |
-| `GET` | `/metrics` | Prometheus metrics endpoint |
+| Method | Endpoint   | Description                 |
+| ------ | ---------- | --------------------------- |
+| `GET`  | `/`        | API information and version |
+| `GET`  | `/health`  | Application health status   |
+| `GET`  | `/metrics` | Prometheus metrics endpoint |
 
 ### Request/Response Examples
 
@@ -490,12 +502,14 @@ Fast_api_Authentication/
 ## Security Features
 
 ### Authentication Security
+
 - **Password Hashing**: Utilizes bcrypt with automatic salt generation and configurable work factor
 - **JWT Tokens**: Stateless authentication with configurable expiration times
 - **HTTP-only Cookies**: Prevents XSS attacks by storing tokens in HTTP-only cookies
 - **Secure Cookie Flags**: SameSite and Secure flags for CSRF protection
 
 ### Application Security
+
 - **Rate Limiting**: Redis-backed rate limiting on authentication endpoints
 - **Input Validation**: Comprehensive Pydantic schema validation on all inputs
 - **SQL Injection Protection**: ORM-based queries with automatic parameterization
@@ -503,6 +517,7 @@ Fast_api_Authentication/
 - **Error Handling**: Generic error messages to prevent information leakage
 
 ### Data Security
+
 - **Email Verification**: Separate verification codes for registration and password reset
 - **Token Expiration**: Time-limited verification codes and reset tokens
 - **Password Policies**: Configurable password strength requirements
@@ -511,17 +526,20 @@ Fast_api_Authentication/
 ## Monitoring and Observability
 
 ### Error Tracking
+
 - **Sentry Integration**: Real-time error tracking and alerting
 - **Error Context**: Automatic capture of request context and user information
 - **Stack Traces**: Full stack traces for debugging
 - **Release Tracking**: Version-based error tracking
 
 ### Performance Monitoring
+
 - **Prometheus Metrics**: Standard application metrics
 - **Custom Metrics**: Request duration, error rates, active users
 - **Health Checks**: Database and Redis connectivity monitoring
 
 ### Logging
+
 - **Structured Logging**: JSON-formatted logs with context
 - **Log Levels**: Configurable logging levels for different environments
 - **Request Tracking**: Automatic logging of all API requests
@@ -606,6 +624,7 @@ npm run test
 **Problem**: Cannot connect to PostgreSQL database
 
 **Solutions**:
+
 ```bash
 # Check if PostgreSQL container is running
 docker ps | grep postgres
@@ -625,6 +644,7 @@ cat .env | grep DB_
 **Problem**: Redis connection errors or rate limiting not working
 
 **Solutions**:
+
 ```bash
 # Check if Redis container is running
 docker ps | grep redis
@@ -645,6 +665,7 @@ docker-compose restart redis
 **Problem**: Verification emails not being sent
 
 **Solutions**:
+
 1. Verify Brevo API key is correct in `.env`
 2. Ensure sender email is verified in Brevo dashboard
 3. Check API key has proper permissions
@@ -656,6 +677,7 @@ docker-compose restart redis
 **Problem**: Authentication failures or token validation errors
 
 **Solutions**:
+
 1. Ensure `SECRET_KEY` is at least 32 characters
 2. Verify `SECRET_KEY` matches between backend instances
 3. Check token expiration settings
@@ -667,6 +689,7 @@ docker-compose restart redis
 **Problem**: Alembic migration failures
 
 **Solutions**:
+
 ```bash
 # Check current database state
 alembic current
@@ -689,6 +712,7 @@ alembic upgrade head
 **Problem**: Vite build or development server errors
 
 **Solutions**:
+
 ```bash
 # Clear node modules and reinstall
 rm -rf node_modules package-lock.json
@@ -709,6 +733,7 @@ npm update
 **Problem**: CORS errors when frontend calls backend
 
 **Solutions**:
+
 1. Verify `FRONTEND_URL` in backend `.env` matches frontend URL
 2. Check `ALLOWED_ORIGINS` includes frontend URL
 3. Ensure frontend is running on expected port (5173)
@@ -722,6 +747,7 @@ npm update
 Before deploying to production, ensure the following:
 
 **Environment Configuration:**
+
 - [ ] Set `DEBUG=False` in backend `.env`
 - [ ] Use strong, unique `SECRET_KEY` (minimum 32 characters)
 - [ ] Configure production database credentials
@@ -730,6 +756,7 @@ Before deploying to production, ensure the following:
 - [ ] Set up Sentry for error tracking
 
 **Security:**
+
 - [ ] Enable HTTPS/SSL certificates
 - [ ] Update `ALLOWED_ORIGINS` to production URLs only
 - [ ] Configure firewall rules
@@ -738,6 +765,7 @@ Before deploying to production, ensure the following:
 - [ ] Enable rate limiting
 
 **Infrastructure:**
+
 - [ ] Set up database backups
 - [ ] Configure log aggregation
 - [ ] Set up monitoring and alerts
@@ -766,30 +794,34 @@ We welcome contributions from the community. Please follow these guidelines:
 ### How to Contribute
 
 1. **Fork the Repository**
+
    ```bash
    git clone https://github.com/yourusername/fullstack-authentication.git
    cd fullstack-authentication
    ```
 
 2. **Create a Feature Branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 3. **Make Your Changes**
+
    - Follow the existing code style
    - Write clear, descriptive commit messages
    - Add comments where necessary
    - Update documentation as needed
 
 4. **Test Your Changes**
+
    ```bash
    # Backend tests
    pytest tests/ -v
-   
+
    # Frontend tests
    npm run test
-   
+
    # Run linters
    black app/  # Backend
    npm run lint  # Frontend
@@ -804,12 +836,14 @@ We welcome contributions from the community. Please follow these guidelines:
 ### Coding Standards
 
 **Backend (Python):**
+
 - Follow PEP 8 style guidelines
 - Use type hints where applicable
 - Write docstrings for functions and classes
 - Maximum line length: 88 characters (Black default)
 
 **Frontend (TypeScript):**
+
 - Follow ESLint configuration
 - Use TypeScript strict mode
 - Write meaningful component and function names
@@ -843,11 +877,13 @@ chore: maintenance tasks
 If you encounter issues or have questions:
 
 **Documentation:**
+
 - Read this README thoroughly
 - Check the [Troubleshooting](#troubleshooting) section
 - Review API documentation at `/docs` endpoint
 
 **Community Support:**
+
 - Open an issue on GitHub with detailed information
 - Include error messages, logs, and steps to reproduce
 - Search existing issues before creating new ones
@@ -855,6 +891,7 @@ If you encounter issues or have questions:
 **Bug Reports:**
 
 When reporting bugs, please include:
+
 - Operating system and version
 - Python and Node.js versions
 - Full error message and stack trace
@@ -864,6 +901,7 @@ When reporting bugs, please include:
 **Feature Requests:**
 
 For feature requests, please provide:
+
 - Clear description of the proposed feature
 - Use cases and benefits
 - Any relevant examples or mockups
@@ -877,6 +915,7 @@ For feature requests, please provide:
 ## Future Enhancements
 
 ### Planned Authentication Features
+
 - **Multi-Factor Authentication (MFA)**: TOTP-based two-factor authentication
 - **OAuth 2.0 Integration**: Google, Facebook, GitHub authentication
 - **Social Login**: Complete OAuth provider implementations
@@ -886,6 +925,7 @@ For feature requests, please provide:
 - **Account Recovery**: Alternative recovery methods
 
 ### Security Enhancements
+
 - **Account Lockout**: Automatic lockout after failed login attempts
 - **Password Policies**: Configurable complexity requirements
 - **Password History**: Prevent password reuse
@@ -894,6 +934,7 @@ For feature requests, please provide:
 - **Audit Logging**: Comprehensive security event logging
 
 ### Administrative Features
+
 - **Admin Dashboard**: User management interface
 - **Role-Based Access Control (RBAC)**: Fine-grained permissions
 - **User Search**: Advanced user filtering and search
@@ -902,6 +943,7 @@ For feature requests, please provide:
 - **Report Generation**: Security and usage reports
 
 ### Developer Experience
+
 - **Comprehensive Test Suite**: Unit, integration, and E2E tests
 - **API Versioning**: Support for multiple API versions
 - **GraphQL Support**: Alternative API interface
@@ -911,6 +953,7 @@ For feature requests, please provide:
 - **Documentation Portal**: Interactive API documentation
 
 ### Infrastructure Improvements
+
 - **Horizontal Scaling**: Load balancer configuration
 - **Caching Strategy**: Advanced caching with Redis
 - **CDN Integration**: Static asset optimization
@@ -923,6 +966,7 @@ For feature requests, please provide:
 This project was built using excellent open-source technologies and tools:
 
 **Backend Frameworks and Libraries:**
+
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern, fast web framework for building APIs
 - [SQLAlchemy](https://www.sqlalchemy.org/) - Python SQL toolkit and ORM
 - [Alembic](https://alembic.sqlalchemy.org/) - Database migration tool
@@ -930,6 +974,7 @@ This project was built using excellent open-source technologies and tools:
 - [Uvicorn](https://www.uvicorn.org/) - Lightning-fast ASGI server
 
 **Frontend Frameworks and Libraries:**
+
 - [React](https://reactjs.org/) - JavaScript library for building user interfaces
 - [Vite](https://vitejs.dev/) - Next-generation frontend tooling
 - [Zustand](https://zustand-demo.pmnd.rs/) - Lightweight state management
@@ -937,6 +982,7 @@ This project was built using excellent open-source technologies and tools:
 - [Zod](https://zod.dev/) - TypeScript-first schema validation
 
 **Infrastructure and Services:**
+
 - [PostgreSQL](https://www.postgresql.org/) - Advanced open-source database
 - [Redis](https://redis.io/) - In-memory data structure store
 - [Docker](https://www.docker.com/) - Containerization platform

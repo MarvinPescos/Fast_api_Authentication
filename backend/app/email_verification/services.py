@@ -6,7 +6,8 @@ import secrets
 import string
 import logging
 
-from app.users import User, EmailVerification, VerificationStatus, VerificationType
+from app.users import User
+from app.email_verification.models import EmailVerification, VerificationStatus, VerificationType
 from app.core import settings
 
 logger = logging.getLogger(__name__)

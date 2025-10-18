@@ -8,14 +8,13 @@ import os
 
 from app.auth import LoginRequest, LoginResponse, ResetPasswordRequest, ForgetPasswordRequest
 from app.email import send_verification_email
-from app.users import User, UserCreate, UserResponse, UserUpdate, EmailVerification, EmailVerification
+from app.users import User, UserCreate, UserResponse, UserUpdate
 from app.core import hash_password, verify_password, create_access_token, PASSWORD_RESET
-from app.email import send_verification_email
-from app.email_verification import EmailVerificationService, RegistrationResponse, EmailVerificationResponse, EmailVerificationCode
+from app.email_verification import EmailVerification ,EmailVerificationService, RegistrationResponse, EmailVerificationResponse, EmailVerificationCode
 from app.core import USER_REGISTRATION
 from app.repositories import BaseRepository, UserRepository
 from app.email.service import send_password_reset_email
-from app.users.models import VerificationStatus, VerificationType
+from app.email_verification.models import VerificationStatus, VerificationType
 
 
 logger = structlog.get_logger(__name__)
@@ -265,6 +264,27 @@ class AuthService:
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Account is not verified. Please check you email"
                 )
+            
+            # Check if 2FA is enabled
+            if existing_user.two_factor_enabled:
+                # Import here to avoid circular dependency
+                from app.auth.two_factor import two_factor_service
+                
+                # If no TOTP code provided, indicate 2FA is required
+                if not login_data.totp_code:
+                    logger.info(f"2FA verification required for user: {login_data.email}")
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="2FA_REQUIRED"
+                    )
+                
+                # Verify TOTP code
+                if not two_factor_service.verify_totp(existing_user.two_factor_secret, login_data.totp_code):
+                    logger.warning(f"Invalid 2FA code for user: {login_data.email}")
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid 2FA code"
+                    )
                  
             token = create_access_token({
                 "sub" : str(existing_user.id)
@@ -309,6 +329,92 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update user"
+            )
+    
+    async def update_profile(self, user: User, profile_data) -> User:
+        """
+        Update user profile information including email and password.
+
+        Args:
+            user: Current user Object
+            profile_data: ProfileUpdateRequest with optional fields
+
+        Returns:
+            User: Updated user object
+            
+        Raises:
+            HTTPException: If validation fails or user already exists
+        """
+        try:
+            # Track if we need to verify current password
+            needs_password_verification = profile_data.email is not None or profile_data.new_password is not None
+            
+            # Verify current password if changing email or password
+            if needs_password_verification:
+                if not profile_data.current_password:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Current password is required to change email or password"
+                    )
+                
+                if not verify_password(profile_data.current_password, user.hashed_password):
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Current password is incorrect"
+                    )
+            
+            # Update username if provided
+            if profile_data.username is not None and profile_data.username != user.username:
+                # Check if username is already taken
+                existing_user = await self.user_repo.get_user_by_username(profile_data.username)
+                if existing_user and existing_user.id != user.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Username already taken"
+                    )
+                user.username = profile_data.username
+            
+            # Update email if provided
+            if profile_data.email is not None and profile_data.email != user.email:
+                # Check if email is already taken
+                existing_user = await self.user_repo.get_user_by_email(profile_data.email)
+                if existing_user and existing_user.id != user.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Email already taken"
+                    )
+                user.email = profile_data.email
+                user.is_email_verified = False  # Require re-verification
+            
+            # Update password if provided
+            if profile_data.new_password is not None:
+                user.hashed_password = hash_password(profile_data.new_password)
+            
+            # Update full name if provided
+            if profile_data.full_name is not None:
+                user.full_name = profile_data.full_name
+
+            await self.db.commit()
+            await self.db.refresh(user)
+
+            logger.info(f"Profile updated successfully: {user.email}")
+            return user
+        except HTTPException:
+            await self.db.rollback()
+            raise
+        except IntegrityError as e:
+            await self.db.rollback()
+            logger.error(f"Integrity error updating profile: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username or email already exists"
+            )
+        except Exception as e:
+            await self.db.rollback()
+            logger.error(f"Error updating profile: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update profile"
             )
 
     async def forget_password(self, payload: ForgetPasswordRequest):
@@ -414,62 +520,4 @@ class AuthService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to reset Password"
             )
-
-    # async def facebook_login_initiate(self) -> dict:
-    #     """Start Facebook OAuth flow"""
-    #     try:
-    #         from app.auth.oauth_service import facebook_oauth
-    #         import secrets
-            
-    #         state = secrets.token_urlsafe(32)
-    #         authorization_url = facebook_oauth.get_authorization_url(state=state)
-            
-    #         logger.info("Facebook OAuth flow initiated")
-    #         return {
-    #             "authorization_url": authorization_url,
-    #             "state": state  # Frontend should store and verify this
-    #         }
-    #     except Exception as e:
-    #         logger.error(f"Facebook OAuth initiation failed: {str(e)}")
-    #         raise HTTPException(
-    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #             detail="Failed to initiate Facebook login"
-    #         )
-
-    # async def facebook_login_callback(self, code: str, state: str = None) -> tuple[User, str]:
-    #     """Complete Facebook OAuth flow"""
-    #     try:
-    #         from app.auth.oauth_service import facebook_oauth
-            
-    #         # Exchange code for token
-    #         token_data = await facebook_oauth.exchange_code_for_token(code)
-    #         access_token = token_data.get("access_token")
-            
-    #         if not access_token:
-    #             raise HTTPException(
-    #                 status_code=status.HTTP_400_BAD_REQUEST,
-    #                 detail="No access token received from Facebook"
-    #             )
-            
-    #         # Get user info from Facebook
-    #         facebook_user = await facebook_oauth.get_user_info(access_token)
-            
-    #         # Create or find user
-    #         user, jwt_token = await facebook_oauth.authenticate_or_create_user(
-    #             facebook_user, self
-    #         )
-            
-    #         logger.info(f"Facebook OAuth successful for user: {user.email}")
-    #         return user, jwt_token
-            
-    #     except HTTPException:
-    #         raise
-    #     except Exception as e:
-    #         logger.error(f"Facebook OAuth callback failed: {str(e)}")
-    #         raise HTTPException(
-    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #             detail="Facebook login failed"
-    #         )
-
-
     

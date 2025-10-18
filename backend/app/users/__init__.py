@@ -1,12 +1,12 @@
-from app.users.models import User, EmailVerification, VerificationStatus, VerificationType
-from app.users.schemas import UserCreate, UserResponse, UserRole, UserUpdate
+from app.users.models import User, OAuthAccount, OAuthProvider
+from app.users.schemas import UserCreate, UserResponse, UserRole, UserUpdate, ProfileUpdateRequest
 
 __all__ = [
     "User",
-    "EmailVerification",
-    "VerificationStatus",
-    "VerificationType", 
+    "OAuthAccount",
+    "OAuthProvider",
     "UserCreate", 
     "UserResponse",
     "UserRole",
-    "UserUpdate"]
+    "UserUpdate",
+    "ProfileUpdateRequest"]

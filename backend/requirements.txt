@@ -6,6 +6,7 @@ psycopg2-binary
 alembic
 pydantic
 pydantic-settings
+email-validator
 python-dotenv
 httpx
 python-jose
@@ -16,6 +17,9 @@ sib-api-v3-sdk
 jinja2
 slowapi
 redis
+qrcode[pil]
+Pillow
+PyOTP
 sentry-sdk[fastapi]
 structlog
 prometheus-client
@@ -24,4 +28,4 @@ authlib
 httpx
 opentelemetry-api
 opentelemetry-sdk
-opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-fastapipyotp==2.9.0
